@@ -1,7 +1,4 @@
-<?php
-
-if (!defined('TL_ROOT'))
-    die('You cannot access this file directly!');
+<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
 
 /**
  * Contao Open Source CMS
@@ -123,30 +120,30 @@ class AttachmentController extends Backend
                 if (!file_exists(TL_ROOT . '/' . $strTmpFilePath))
                 {
                     $strFilePath = $strTmpFilePath;
-                    $blnExist = false;
+                    $blnExist    = false;
                 }
-                
+
                 $intIndex++;
             }
         }
 
-        if($this->_saveFile($strFilePath))
+        if ($this->_saveFile($strFilePath))
         {
             return $strFilePath;
         }
-        
+
         return FALSE;
     }
 
     protected function _saveFile($strFilePath)
     {
         $objFile = new File($strFilePath);
-        if(!$objFile->write($this->getData()))
+        if (!$objFile->write($this->getData()))
         {
             $objFile->delete();
             return false;
         }
-        
+
         return true;
     }
 

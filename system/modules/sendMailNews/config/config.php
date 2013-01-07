@@ -32,7 +32,6 @@
  */
 $GLOBALS['BE_MOD']['content']['sendMailNews'] = array(
     'tables' => array('tl_send_mail_news'),
-    'icon'  => 'system/modules/zad_sendnews/html/icon.png',
     'check' => array('SendMailNews', 'checkMailsNow')
 );
 

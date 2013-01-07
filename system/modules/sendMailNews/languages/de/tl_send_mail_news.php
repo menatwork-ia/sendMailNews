@@ -66,8 +66,8 @@ $GLOBALS['TL_LANG']['tl_send_mail_news']['time_check_options']['M']             
  */
 $GLOBALS['TL_LANG']['tl_send_mail_news']['title_legend']       = 'Titel';
 $GLOBALS['TL_LANG']['tl_send_mail_news']['mail_server_legend'] = 'Posteingangsserver Einstellungen';
-$GLOBALS['TL_LANG']['tl_send_mail_news']['archive_legend'] = 'News Archiv';
-$GLOBALS['TL_LANG']['tl_send_mail_news']['advanced_legend'] = 'Erweiterte Einstellungen';
+$GLOBALS['TL_LANG']['tl_send_mail_news']['archive_legend']     = 'News Archiv';
+$GLOBALS['TL_LANG']['tl_send_mail_news']['advanced_legend']    = 'Erweiterte Einstellungen';
 
 /**
  * Buttons

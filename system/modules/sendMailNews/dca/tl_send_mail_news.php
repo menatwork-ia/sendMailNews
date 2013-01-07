@@ -1,7 +1,4 @@
-<?php
-
-if (!defined('TL_ROOT'))
-    die('You cannot access this file directly!');
+<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
 
 /**
  * Contao Open Source CMS
@@ -255,7 +252,7 @@ $GLOBALS['TL_DCA']['tl_send_mail_news'] = array(
             )
         ),
         'published' => array
-            (            
+            (
             'label'     => &$GLOBALS['TL_LANG']['tl_send_mail_news']['published'],
             'exclude'   => true,
             'inputType' => 'checkbox',

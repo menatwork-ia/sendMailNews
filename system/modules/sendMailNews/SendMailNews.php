@@ -1,7 +1,4 @@
-<?php
-
-if (!defined('TL_ROOT'))
-    die('You cannot access this file directly!');
+<?php if (!defined('TL_ROOT')) die('You cannot access this file directly!');
 
 /**
  * Contao Open Source CMS
@@ -77,7 +74,7 @@ class SendMailNews extends Backend
 
             if (is_null($this->_objMailConfig))
                 return null;
-            
+
             $this->_objConnectionController = new ConnectionController($this->_objMailConfig);
             $this->_objConnectionController->connectInbox();
 
@@ -121,7 +118,7 @@ class SendMailNews extends Backend
                 'published'   => '1',
                 'source'      => 'default'
             );
-            
+
             if ($this->_objMailConfig->enclosure)
             {
                 $arrAttachmentList = array();

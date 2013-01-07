@@ -30,5 +30,5 @@
 /**
  * Back end modules
  */
-$GLOBALS['TL_LANG']['MOD']['sendMailNews'] = array('New Get News');
+$GLOBALS['TL_LANG']['MOD']['sendMailNews'] = array('E-Mail News Clients');
 
