@@ -193,7 +193,7 @@ class ConnectionController extends Backend
     protected function processStructure($intId, $objStructure, $partIdentifier = null)
     {
         $arrParameters = $this->getParametersFromStructure($objStructure);
-
+        
         if (isset($arrParameters['NAME']) || isset($arrParameters['FILENAME']))
         {
             $attachment          = new AttachmentController($this, $intId, $objStructure, $partIdentifier);
@@ -208,7 +208,9 @@ class ConnectionController extends Backend
             $messageBody = self::decode($messageBody, $objStructure->encoding);
 
             if ($arrParameters['CHARSET'] !== 'UTF-8//TRANSLIT')
-                $messageBody = iconv($parameters['CHARSET'], 'UTF-8//TRANSLIT', $messageBody);
+            {
+                $messageBody = iconv($arrParameters['CHARSET'], 'UTF-8//TRANSLIT', $messageBody);
+            }
 
             if (strtolower($objStructure->subtype) == 'plain' || $objStructure->type == 1)
             {
@@ -258,11 +260,11 @@ class ConnectionController extends Backend
         $arrParameters = array();
         if (isset($objStructure->parameters))
             foreach ($objStructure->parameters as $parameter)
-                $arrParameters[$parameter->attribute] = $parameter->value;
+                $arrParameters[strtoupper($parameter->attribute)] = $parameter->value;
 
         if (isset($objStructure->dparameters))
             foreach ($objStructure->dparameters as $parameter)
-                $arrParameters[$parameter->attribute] = $parameter->value;
+                $arrParameters[strtoupper($parameter->attribute)] = $parameter->value;
 
         return $arrParameters;
     }
