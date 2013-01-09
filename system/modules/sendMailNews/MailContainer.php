@@ -30,7 +30,7 @@
 /**
  * Class MailContainer
  */
-class MailContainer extends Backend
+class MailContainer
 {
 
     protected $_intId         = null;
@@ -43,14 +43,6 @@ class MailContainer extends Backend
     protected $_arrReplyTo    = null;
     protected $_strBody       = null;
     protected $_arrAttachment = null;
-
-    /**
-     * Initialize the object
-     */
-    public function __construct()
-    {
-        parent::__construct();
-    }
 
     public function getId()
     {
