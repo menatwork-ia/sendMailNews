@@ -84,7 +84,7 @@ $GLOBALS['TL_DCA']['tl_send_mail_news'] = array(
             'check'      => array(
                 'label' => &$GLOBALS['TL_LANG']['tl_send_mail_news']['check'],
                 'href'  => 'key=check',
-                'icon'  => 'system/modules/zad_sendnews/html/check.gif'
+                'icon'  => 'system/themes/default/images/copychilds.gif'
             ),
 //            'toggle'     => array(
 //                'label'      => &$GLOBALS['TL_LANG']['tl_send_mail_news']['toggle'],
