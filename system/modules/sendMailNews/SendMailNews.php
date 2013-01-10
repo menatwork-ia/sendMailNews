@@ -53,9 +53,7 @@ class SendMailNews extends Backend
     public function checkMailsNow()
     {
         $intId = $this->Input->get('id');
-
         $this->checkForMails($intId);
-        exit();
         $this->redirect($this->getReferer());
     }
 
@@ -152,6 +150,7 @@ class SendMailNews extends Backend
                             $arrNews['singleSRC']   = $strFilePath;
                             $arrNews['size']        = $this->_objMailConfig->size;
                             $arrNews['imagemargin'] = $this->_objMailConfig->imagemargin;
+                            $arrNews['fullsize'] = $this->_objMailConfig->fullsize;
                             $arrNews['floating']    = $this->_objMailConfig->floating;
 
                             $blnHasInline = true;
@@ -171,7 +170,7 @@ class SendMailNews extends Backend
             }
 
             $this->_insertNews($arrNews);
-//            $this->_objConnectionController->delete($objMail);
+            $this->_objConnectionController->delete($objMail);
         }
     }
 

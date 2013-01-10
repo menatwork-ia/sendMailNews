@@ -358,25 +358,14 @@ class ConnectionController extends Backend
      */
     public function saveAttachmentToDir($strPath, $objAttachment)
     {
-        $strFilePath = $strPath . '/' . $objAttachment->filename;
+        $strMd5 = md5($objAttachment->data);
+        $arrFileInfo    = pathinfo($objAttachment->filename);
+        $strFilePath = $strPath . '/' . $strMd5 . '.' . $arrFileInfo['extension'];
 
         if (file_exists(TL_ROOT . '/' . $strFilePath))
         {
-            $blnExist = true;
-            $intIndex = 1;
-            while ($blnExist)
-            {
-                $arrFileInfo    = pathinfo($objAttachment->filename);
-                $strTmpFilePath = $strPath . '/' . $arrFileInfo['filename'] . '_' . $intIndex . '.' . $arrFileInfo['extension'];
-
-                if (!file_exists(TL_ROOT . '/' . $strTmpFilePath))
-                {
-                    $strFilePath = $strTmpFilePath;
-                    $blnExist    = false;
-                }
-
-                $intIndex++;
-            }
+            $objAttachment->fileSystemImage;
+            return $strFilePath;
         }
 
         if ($this->_saveAttachmentFile($strFilePath, $objAttachment))
