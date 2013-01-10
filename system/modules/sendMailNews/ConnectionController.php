@@ -59,11 +59,41 @@ class ConnectionController extends Backend
         if (is_null($this->_objInbox))
             $this->_connectInbox();
 
-        for ($i = 1; $i <= $this->_getMailsCount(); $i++)
+        for ($intId = 1; $intId <= $this->_getMailsCount(); $intId++)
         {
             $objMail = new MailContainer();
 
-            $this->_loadMessage($i, $objMail);
+            if (isset($this->plaintextMessage))
+                unset($this->plaintextMessage);
+            if (isset($this->htmlMessage))
+                unset($this->htmlMessage);
+            if (isset($this->attachments))
+                unset($this->attachments);
+
+            $objMail->setId($intId);
+
+            $this->_setMailHeaderInfo($this->_getHeaders($intId), $objMail);
+
+            $objStructure = $this->_getStructure($intId);
+
+            if (!isset($objStructure->parts))
+            {
+                // Not multipart
+                $this->processStructure($intId, $objStructure);
+            }
+            else
+            {
+                // Multipart
+                foreach ($objStructure->parts as $id => $part)
+                {
+                    $this->processStructure($intId, $part, $id + 1);
+                }
+            }
+
+            $this->_setMailBodyInfo($objMail, true);
+
+            if (isset($this->attachments))
+                $objMail->setAttachment($this->attachments);
 
             $this->_arrMails[] = $objMail;
         }
@@ -71,7 +101,71 @@ class ConnectionController extends Backend
         return $this->_arrMails;
     }
 
-    // IMAP HELPER -------------------------------------------------------------
+    // SET MAIL CONTAINER INFORMATION ------------------------------------------
+
+    /**
+     * Set information from given header object to given mail container
+     * (subject, date, to, from, reply_to, sender)
+     * 
+     * @param \stdClass $objHeaders
+     * @param \MailContainer $objMail
+     */
+    protected function _setMailHeaderInfo($objHeaders, $objMail)
+    {
+        $objMail->setSubject($objHeaders->subject);
+        $objMail->setDate($objHeaders->date);
+
+        $arrAddrTypes = array(
+            'to'       => 'setTo',
+            'from'     => 'setFrom',
+            'reply_to' => 'setReplyTo',
+            'sender'   => 'setSender'
+        );
+
+        foreach ($arrAddrTypes as $strAddrType => $strFunc)
+        {
+            if (isset($objHeaders->$strAddrType))
+            {
+                $objMail->$strFunc($this->_processAddressObject($objHeaders->$strAddrType));
+            }
+        }
+    }
+
+    /**
+     * Set body message infromation to given mail container
+     * 
+     * @param \MailContainer $objMail
+     * @param boolean $blnHtml
+     */
+    protected function _setMailBodyInfo($objMail, $blnHtml = false)
+    {
+        $objMail->setType('plain');
+        if ($blnHtml)
+        {
+            $objMail->setType('html');
+            if (!isset($this->htmlMessage) && isset($this->plaintextMessage))
+            {
+                $objMail->setBody(nl2br_html5($this->plaintextMessage));
+            }
+            elseif (isset($this->htmlMessage))
+            {
+                $objMail->setBody($this->htmlMessage);
+            }
+        }
+        else
+        {
+            if (!isset($this->plaintextMessage) && isset($this->htmlMessage))
+            {
+                $objMail->setBody(strip_tags($this->htmlMessage));
+            }
+            elseif (isset($this->plaintextMessage))
+            {
+                $objMail->setBody($this->plaintextMessage);
+            }
+        }
+    }
+
+    // GET INFO FROM IMAP ------------------------------------------------------
 
     public function connectInbox()
     {
@@ -90,72 +184,11 @@ class ConnectionController extends Backend
     }
 
     /**
+     * Return the header object for the given id in the open imap stream
      * 
-     * @param integer $intId
-     * @param MailContainer $objMail
+     * @param interger $intId
+     * @return \stdClass
      */
-    protected function _loadMessage($intId, &$objMail)
-    {
-        if (isset($this->plaintextMessage))
-            unset($this->plaintextMessage);
-        if (isset($this->htmlMessage))
-            unset($this->htmlMessage);
-        if (isset($this->attachments))
-            unset($this->attachments);
-
-        $objMail->setId($intId);
-
-        /* First load the message overview information */
-
-        $objMessageOverview = $this->_getOverview($intId);
-
-        $objMail->setSubject($objMessageOverview->subject);
-        $objMail->setDate($objMessageOverview->date);
-        $objMail->setSize($objMessageOverview->size);
-
-        /* Next load in all of the header information */
-
-        $headers = $this->_getHeaders($intId);
-
-        if (isset($headers->to))
-            $objMail->setTo($this->_processAddressObject($headers->to));
-
-        if (isset($headers->cc))
-            $objMail->setCc($this->_processAddressObject($headers->cc));
-
-        $objMail->setFrom($this->_processAddressObject($headers->from));
-        $objMail->setReplyTo(isset($headers->reply_to) ? $this->_processAddressObject($headers->reply_to) : $this->from);
-
-        /* Finally load the structure itself */
-
-        $objStructure = $this->_getStructure($intId);
-
-        if (!isset($objStructure->parts))
-        {
-            // Not multipart
-            $this->processStructure($intId, $objStructure);
-        }
-        else
-        {
-            // Multipart
-            foreach ($objStructure->parts as $id => $part)
-            {
-                $this->processStructure($intId, $part, $id + 1);
-            }
-        }
-
-        $objMail->setBody($this->_getMessageBody(true));
-
-        if (isset($this->attachments))
-            $objMail->setAttachment($this->attachments);
-    }
-
-    protected function _getOverview($intId)
-    {
-        $arrMessageOverview = imap_fetch_overview($this->_objInbox, $intId);
-        return array_shift($arrMessageOverview);
-    }
-
     protected function _getHeaders($intId)
     {
         // raw headers
@@ -170,21 +203,6 @@ class ConnectionController extends Backend
         return $headerObject;
     }
 
-    protected function _processAddressObject($addresses)
-    {
-        $outputAddresses = array();
-        if (is_array($addresses))
-            foreach ($addresses as $address)
-            {
-                $currentAddress = array();
-                $currentAddress['address'] = $address->mailbox . '@' . $address->host;
-                if (isset($address->personal))
-                    $currentAddress['name']    = $address->personal;
-                $outputAddresses[]         = $currentAddress;
-            }
-        return $outputAddresses;
-    }
-
     protected function _getStructure($intId)
     {
         return imap_fetchstructure($this->_objInbox, $intId);
@@ -192,12 +210,13 @@ class ConnectionController extends Backend
 
     protected function processStructure($intId, $objStructure, $partIdentifier = null)
     {
+
         $arrParameters = $this->getParametersFromStructure($objStructure);
-        
+
         if (isset($arrParameters['NAME']) || isset($arrParameters['FILENAME']))
         {
-            $attachment          = new AttachmentController($this, $intId, $objStructure, $partIdentifier);
-            $this->attachments[] = $attachment;
+            $objAttachment                         = $this->_getAttachmentInformation($intId, $objStructure, $partIdentifier);
+            ($objAttachment->ifid) ? $this->attachments[$objAttachment->id] = $objAttachment : $this->attachments[]                   = $objAttachment;
         }
         elseif ($objStructure->type == 0 || $objStructure->type == 1)
         {
@@ -205,11 +224,11 @@ class ConnectionController extends Backend
             $messageBody = isset($partIdentifier) ?
                     imap_fetchbody($this->_objInbox, $intId, $partIdentifier) : imap_body($this->_objInbox, $intId);
 
-            $messageBody = self::decode($messageBody, $objStructure->encoding);
+            $messageBody = $this->_decode($messageBody, $objStructure->encoding);
 
-            if ($arrParameters['CHARSET'] !== 'UTF-8//TRANSLIT')
+            if ($arrParameters['CHARSET'] !== $GLOBALS['EXT_SEND_MAIL_NEWS']['charset'])
             {
-                $messageBody = iconv($arrParameters['CHARSET'], 'UTF-8//TRANSLIT', $messageBody);
+                $messageBody = iconv($arrParameters['CHARSET'], $GLOBALS['EXT_SEND_MAIL_NEWS']['charset'], $messageBody);
             }
 
             if (strtolower($objStructure->subtype) == 'plain' || $objStructure->type == 1)
@@ -227,7 +246,6 @@ class ConnectionController extends Backend
             }
             else
             {
-
                 if (isset($this->htmlMessage))
                 {
                     $this->htmlMessage .= '<br><br>';
@@ -255,69 +273,6 @@ class ConnectionController extends Backend
         }
     }
 
-    public function getParametersFromStructure($objStructure)
-    {
-        $arrParameters = array();
-        if (isset($objStructure->parameters))
-            foreach ($objStructure->parameters as $parameter)
-                $arrParameters[strtoupper($parameter->attribute)] = $parameter->value;
-
-        if (isset($objStructure->dparameters))
-            foreach ($objStructure->dparameters as $parameter)
-                $arrParameters[strtoupper($parameter->attribute)] = $parameter->value;
-
-        return $arrParameters;
-    }
-
-    public static function decode($data, $encoding)
-    {
-        if (!is_numeric($encoding))
-            $encoding = strtolower($encoding);
-
-        switch ($encoding)
-        {
-            case 'quoted-printable':
-            case 4:
-                return quoted_printable_decode($data);
-
-            case 'base64':
-            case 3:
-                return base64_decode($data);
-
-            default:
-                return $data;
-        }
-    }
-
-    protected function _getMessageBody($html = false)
-    {
-        if ($html)
-        {
-            if (!isset($this->htmlMessage) && isset($this->plaintextMessage))
-            {
-                $output = nl2br_html5($this->plaintextMessage);
-                return $output;
-            }
-            elseif (isset($this->htmlMessage))
-            {
-                return $this->htmlMessage;
-            }
-        }
-        else
-        {
-            if (!isset($this->plaintextMessage) && isset($this->htmlMessage))
-            {
-                $output = strip_tags($this->htmlMessage);
-                return $output;
-            }
-            elseif (isset($this->plaintextMessage))
-            {
-                return $this->plaintextMessage;
-            }
-        }
-        return false;
-    }
-
     /**
      * 
      * @param MailContainer $objMail
@@ -336,11 +291,182 @@ class ConnectionController extends Backend
         imap_close($this->_objInbox, CL_EXPUNGE);
     }
 
+    // IMAP ATTACHMENT ---------------------------------------------------------
+
+    /**
+     * Create an object with all nessesary information about the attachment
+     * 
+     * @param integer $intId
+     * @param \stdClass $objStructure
+     * @param null|integer $partIdentifier
+     * @return \stdClass
+     */
+    protected function _getAttachmentInformation($intId, $objStructure, $partIdentifier = null)
+    {
+        $objFile = new stdClass();
+
+        $arrParameters = $this->getParametersFromStructure($objStructure);
+
+        if (isset($arrParameters['FILENAME']))
+        {
+            $objFile->filename = $arrParameters['FILENAME'];
+        }
+        elseif (isset($arrParameters['NAME']))
+        {
+            $objFile->filename = $arrParameters['NAME'];
+        }
+
+        $objFile->ifid = $objStructure->ifid;
+        $objFile->id   = str_replace(array('<', '>'), '', $objStructure->id);
+        $objFile->size     = $objStructure->bytes;
+        $objFile->mimeType = $this->typeIdToString($objStructure->type);
+
+        if (isset($objStructure->subtype))
+            $objFile->mimeType .= '/' . strtolower($objStructure->subtype);
+
+        $objFile->encoding    = $objStructure->encoding;
+        $objFile->disposition = strtolower($objStructure->disposition);
+        $objFile->data        = $this->_getAttachmentData($intId, $objStructure, $partIdentifier);
+
+        return $objFile;
+    }
+
+    /**
+     * Return the encoded attachment file body as raw data
+     * 
+     * @param integer $intId
+     * @param \stdClass $objStructure
+     * @param null|integer $partIdentifier
+     * @return string
+     */
+    protected function _getAttachmentData($intId, $objStructure, $partIdentifier)
+    {
+        $attachmentBody = isset($partIdentifier) ?
+                imap_fetchbody($this->_objInbox, $intId, $partIdentifier) : imap_body($this->_objInbox, $intId);
+
+        $attachmentBody = $this->_decode($attachmentBody, $objStructure->encoding);
+        return $attachmentBody;
+    }
+
+    /**
+     * Save given attachment object to the given location. 
+     * Count int value on filename if exists
+     * 
+     * @param string $strPath
+     * @param \stdClass $objAttachment
+     * @return string|boolean
+     */
+    public function saveAttachmentToDir($strPath, $objAttachment)
+    {
+        $strFilePath = $strPath . '/' . $objAttachment->filename;
+
+        if (file_exists(TL_ROOT . '/' . $strFilePath))
+        {
+            $blnExist = true;
+            $intIndex = 1;
+            while ($blnExist)
+            {
+                $arrFileInfo    = pathinfo($objAttachment->filename);
+                $strTmpFilePath = $strPath . '/' . $arrFileInfo['filename'] . '_' . $intIndex . '.' . $arrFileInfo['extension'];
+
+                if (!file_exists(TL_ROOT . '/' . $strTmpFilePath))
+                {
+                    $strFilePath = $strTmpFilePath;
+                    $blnExist    = false;
+                }
+
+                $intIndex++;
+            }
+        }
+
+        if ($this->_saveAttachmentFile($strFilePath, $objAttachment))
+        {
+            return $strFilePath;
+        }
+
+        return false;
+    }
+
+    /**
+     * Try to save the given file in the given location and return result
+     * 
+     * @param string $strFilePath
+     * @param \stdClass $objAttachment
+     * @return boolean
+     */
+    protected function _saveAttachmentFile($strFilePath, $objAttachment)
+    {
+        $objFile = new File($strFilePath);
+        if (!$objFile->write($objAttachment->data))
+        {
+            $objFile->delete();
+            return false;
+        }
+
+        return true;
+    }
+
     // HELPER ------------------------------------------------------------------
 
     public function getInboxObject()
     {
         return $this->_objInbox;
+    }
+
+    /**
+     * Create an object with all nessesary information and return it
+     * 
+     * @param type $arrAddr
+     * @return null|\stdClass
+     */
+    protected function _processAddressObject($arrAddr)
+    {
+        if (!is_array($arrAddr))
+            return NULL;
+
+        $objAddr = $arrAddr[0];
+
+        $objFormedAddr           = new stdClass();
+        $objFormedAddr->personal = $objAddr->personal;
+        $objFormedAddr->mailbox  = $objAddr->mailbox;
+        $objFormedAddr->host     = $objAddr->host;
+        $objFormedAddr->address  = $objAddr->mailbox . '@' . $objAddr->host;
+
+        return $objFormedAddr;
+    }
+
+    public function getParametersFromStructure($objStructure)
+    {
+        $arrParameters = array();
+        if (isset($objStructure->parameters))
+            foreach ($objStructure->parameters as $parameter)
+                $arrParameters[strtoupper($parameter->attribute)] = $parameter->value;
+
+        if (isset($objStructure->dparameters))
+            foreach ($objStructure->dparameters as $parameter)
+                $arrParameters[strtoupper($parameter->attribute)] = $parameter->value;
+
+        return $arrParameters;
+    }
+
+    protected function _decode($data, $encoding)
+    {
+        if (!is_numeric($encoding))
+            $encoding = strtolower($encoding);
+
+        switch ($encoding)
+        {
+            case 'quoted-printable':
+            case 4:
+                return quoted_printable_decode($data);
+
+            case 'base64':
+            case 3:
+                return base64_decode($data);
+
+            default:
+                return $data;
+        }
     }
 
     public function typeIdToString($intId)

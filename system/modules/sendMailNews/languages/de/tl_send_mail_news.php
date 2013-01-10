@@ -39,9 +39,11 @@ $GLOBALS['TL_LANG']['tl_send_mail_news']['mail_server_user'] = array('Server Ben
 $GLOBALS['TL_LANG']['tl_send_mail_news']['mail_server_password'] = array('Server Passwort', 'Hier müssen Sie das Loggin-Passwort des E-Mail Accounts eingeben.');
 $GLOBALS['TL_LANG']['tl_send_mail_news']['mail_server_mailbox'] = array('Server Ordner', '');
 $GLOBALS['TL_LANG']['tl_send_mail_news']['news_archive'] = array('News Archiv', 'Wählen Sie hier das Archiv aus in dem die E-Mails gespeichert werden sollen.');
-$GLOBALS['TL_LANG']['tl_send_mail_news']['time_check'] = array('Cron Job Interval', 'Wählen Sie hier den Interval aus, wann nach neuen E-Mails zum importieren geschaut werden soll.');
+$GLOBALS['TL_LANG']['tl_send_mail_news']['inline_image'] = array('Inline Bilder Anzeigen', 'Hier klicken um E-Mail Inlinebilder den news hinzuzufügen.');
+$GLOBALS['TL_LANG']['tl_send_mail_news']['inline_image_dir'] = array('Inlinebilder Ordner', 'Wählen Sie hier den Ordner aus wo die Inlinebilder gespeichert werden sollen.');
 $GLOBALS['TL_LANG']['tl_send_mail_news']['enclosure'] = array('Anhänge anfügen', 'Hier klicken um E-Mailanhänge den news anzufügen.');
 $GLOBALS['TL_LANG']['tl_send_mail_news']['enclosure_dir'] = array('Anhang Ordner', 'Wählen Sie hier den Ordner aus wo die Anhänge gespeichert werden sollen.');
+$GLOBALS['TL_LANG']['tl_send_mail_news']['time_check'] = array('Cron Job Interval', 'Wählen Sie hier den Interval aus, wann nach neuen E-Mails zum importieren geschaut werden soll.');
 $GLOBALS['TL_LANG']['tl_send_mail_news']['published'] = array('E-Mail Client veröffentlichen', 'Die E-Mails auf der Webseite anzeigen.');
 
 /**
@@ -64,10 +66,12 @@ $GLOBALS['TL_LANG']['tl_send_mail_news']['time_check_options']['M']             
 /**
  * Legends
  */
-$GLOBALS['TL_LANG']['tl_send_mail_news']['title_legend']       = 'Titel';
-$GLOBALS['TL_LANG']['tl_send_mail_news']['mail_server_legend'] = 'Posteingangsserver Einstellungen';
-$GLOBALS['TL_LANG']['tl_send_mail_news']['archive_legend']     = 'News Archiv';
-$GLOBALS['TL_LANG']['tl_send_mail_news']['advanced_legend']    = 'Erweiterte Einstellungen';
+$GLOBALS['TL_LANG']['tl_send_mail_news']['title_legend']        = 'Titel';
+$GLOBALS['TL_LANG']['tl_send_mail_news']['mail_server_legend']  = 'Posteingangsserver Einstellungen';
+$GLOBALS['TL_LANG']['tl_send_mail_news']['archive_legend']      = 'News Archiv';
+$GLOBALS['TL_LANG']['tl_send_mail_news']['inline_image_legend'] = 'Inline Bild Einstellungen';
+$GLOBALS['TL_LANG']['tl_send_mail_news']['enclosure_legend']    = 'Anhänge Einstellungen';
+$GLOBALS['TL_LANG']['tl_send_mail_news']['advanced_legend']     = 'Erweiterte Einstellungen';
 
 /**
  * Buttons

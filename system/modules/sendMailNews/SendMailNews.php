@@ -39,7 +39,6 @@ class SendMailNews extends Backend
      */
     protected $_objConnectionController = null;
     protected $_objMailConfig           = null;
-    protected $_arrFilterTags           = array('style');
 
     /**
      * Initialize the object
@@ -56,7 +55,7 @@ class SendMailNews extends Backend
         $intId = $this->Input->get('id');
 
         $this->checkForMails($intId);
-
+        exit();
         $this->redirect($this->getReferer());
     }
 
@@ -99,9 +98,8 @@ class SendMailNews extends Backend
             /* @var $objMail MailContainer */
             $time = time();
 
-            $arrFrom = $objMail->getFrom();
+            $mixedAuthor = $this->_getUserIdForMail($objMail->getFrom()->address);
 
-            $mixedAuthor = $this->_getUserIdForMail($arrFrom[0]['address']);
             if (is_null($mixedAuthor))
                 continue;
 
@@ -112,13 +110,14 @@ class SendMailNews extends Backend
                 'time'        => $time,
                 'headline'    => $this->String->substr($objMail->getSubject(), 230),
                 'author'      => $mixedAuthor,
-                'subheadline' => $this->String->substr('', 230),
-                'text'        => $this->_validateHtml($objMail->getBody()),
-                'teaser'      => '',
+                'subheadline' => '',
+                'text'        => $this->_validateMailBody($objMail),
+                'teaser'      => $this->String->substr($objMail->getBody(), 230),
                 'published'   => '1',
                 'source'      => 'default'
             );
 
+            $blnHasInline = false;
             if ($this->_objMailConfig->enclosure)
             {
                 $arrAttachmentList = array();
@@ -126,13 +125,41 @@ class SendMailNews extends Backend
 
                 if (is_array($arrAttachment) && count($arrAttachment) > 0)
                 {
-                    foreach ($arrAttachment as $objAttachmentController)
+                    foreach ($arrAttachment as $objAttachment)
                     {
-                        /* @var $objAttachmentController AttachmentController */
-                        $strFilePath = $objAttachmentController->saveToDirectory($this->_objMailConfig->enclosure_dir);
+                        if (($objAttachment->disposition == 'inline' && !$this->_objMailConfig->inline_image && !$blnHasInline) ||
+                                ($objAttachment->disposition != 'inline' && !$this->_objMailConfig->enclosure))
+                            continue;
 
-                        if (strlen($strFilePath) > 0)
+                        $strPath = '';
+                        switch ($objAttachment->disposition)
+                        {
+                            case 'inline':
+                                $strPath = $this->_objMailConfig->inline_image_dir;
+                                break;
+
+                            default:
+                                $strPath = $this->_objMailConfig->enclosure_dir;
+                                break;
+                        }
+
+                        /* @var $objAttachment AttachmentController */
+                        $strFilePath = $this->_objConnectionController->saveAttachmentToDir($strPath, $objAttachment);
+
+                        if (strlen($strFilePath) > 0 && $objAttachment->disposition == 'inline')
+                        {
+                            $arrNews['addImage']    = $this->_objMailConfig->inline_image;
+                            $arrNews['singleSRC']   = $strFilePath;
+                            $arrNews['size']        = $this->_objMailConfig->size;
+                            $arrNews['imagemargin'] = $this->_objMailConfig->imagemargin;
+                            $arrNews['floating']    = $this->_objMailConfig->floating;
+
+                            $blnHasInline = true;
+                        }
+                        else if (strlen($strFilePath) > 0)
+                        {
                             $arrAttachmentList[] = $strFilePath;
+                        }
                     }
                 }
 
@@ -144,7 +171,7 @@ class SendMailNews extends Backend
             }
 
             $this->_insertNews($arrNews);
-            $this->_objConnectionController->delete($objMail);
+//            $this->_objConnectionController->delete($objMail);
         }
     }
 
@@ -202,16 +229,35 @@ class SendMailNews extends Backend
 
     /* HELPER --------------------------------------------------------------- */
 
-    protected function _validateHtml($strValue)
+    /**
+     * 
+     * @param MailContainer $objMail
+     * @return type
+     */
+    protected function _validateMailBody($objMail)
     {
-        $strAllowedTags = '<span><br><p><b><i><strong>';
-        foreach ($this->_arrFilterTags as $strTag)
+        // Find all inline images and save the first and remove all other
+        preg_match_all('/src="cid:(.*)"/Uims', $objMail->getBody(), $arrMatches);
+
+        $arrAttachment = $objMail->getAttachment();
+
+        foreach ($arrMatches[1] as $key => $strImageId)
         {
-            $strAllowedTags = str_replace('<' . $strTag . '>', '', $strAllowedTags);
+            if ($key == 0)
+            {
+                $arrAttachment[$strImageId]->disposition = 'inline';
+                continue;
+            }
+
+            unset($arrAttachment[$strImageId]);
         }
 
-        $strText = trim(strip_tags($strValue, $strAllowedTags));
+        $objMail->setAttachment($arrAttachment);
 
+        // Remove all tags that are not allowed
+        $strText = trim(strip_tags($objMail->getBody(), $GLOBALS['EXT_SEND_MAIL_NEWS']['allowed_tags']));
+
+        // Remove special attributes from tags        
         $arrAttrPattern = array(
             // Remove style attribute
             'style' => '/ ?style=\"[^>]*\" ?/i',
@@ -224,6 +270,7 @@ class SendMailNews extends Backend
             $strText = preg_replace($strPattern, '', $strText);
         }
 
+        // Remove empty tags        
         $arrTagPattern = array(
             // Remove empty span tags
             'span' => '/<span[^>]*>[\s|&nbsp;]*<\/span>/',

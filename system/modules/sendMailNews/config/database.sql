@@ -9,7 +9,7 @@
 
 -- 
 -- Table `tl_send_mail_news`
--- 
+--
 
 CREATE TABLE `tl_send_mail_news` (
   `id` int(10) unsigned NOT NULL auto_increment,
@@ -23,9 +23,15 @@ CREATE TABLE `tl_send_mail_news` (
   `mail_server_password` varchar(255) NOT NULL default '',
   `mail_server_mailbox` varchar(255) NOT NULL default '',
   `news_archive` int(10) unsigned NOT NULL default '0',
-  `time_check` varchar(16) NOT NULL default '',
+  `inline_image` char(1) NOT NULL default '',
+  `inline_image_dir` varchar(255) NOT NULL default '',
+  `size` varchar(64) NOT NULL default '',
+  `imagemargin` varchar(128) NOT NULL default '',
+  `fullsize` char(1) NOT NULL default '',
+  `floating` varchar(32) NOT NULL default '',
   `enclosure` char(1) NOT NULL default '',
   `enclosure_dir` varchar(255) NOT NULL default '',
+  `time_check` varchar(16) NOT NULL default '',  
   `published` char(1) NOT NULL default '',
   PRIMARY KEY  (`id`),
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;

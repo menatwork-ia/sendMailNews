@@ -26,6 +26,12 @@
  * @license    GNU/LGPL
  * @filesource
  */
+
+/**
+ * Load tl_content language file
+ */
+$this->loadLanguageFile('tl_content');
+
 /**
  * Table tl_send_mail_news
  */
@@ -100,15 +106,16 @@ $GLOBALS['TL_DCA']['tl_send_mail_news'] = array(
     ),
     // Palettes
     'palettes' => array(
-        '__selector__' => array('enclosure'),
-        'default'     => '{title_legend},title;{mail_server_legend},mail_server_name,mail_server_port,mail_server_type,mail_server_security,mail_server_user,mail_server_password,mail_server_mailbox;{archive_legend},news_archive;{advanced_legend},time_check,enclosure,published;'
+        '__selector__' => array('enclosure', 'inline_image'),
+        'default'     => '{title_legend},title;{mail_server_legend},mail_server_name,mail_server_port,mail_server_type,mail_server_security,mail_server_user,mail_server_password,mail_server_mailbox;{archive_legend},news_archive;{inline_image_legend},inline_image;{enclosure_legend},enclosure;{advanced_legend},time_check,published;'
     ),
     // Subpalettes
     'subpalettes' => array(
-        'enclosure' => 'enclosure_dir'
+        'inline_image' => 'inline_image_dir,size,imagemargin,fullsize,floating',
+        'enclosure'    => 'enclosure_dir'
     ),
     // Fields
-    'fields'    => array(
+    'fields'       => array(
         'title' => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_send_mail_news']['title'],
             'exclude'   => true,
@@ -217,7 +224,91 @@ $GLOBALS['TL_DCA']['tl_send_mail_news'] = array(
                 'tl_class'           => 'w50'
             )
         ),
-        'time_check'         => array(
+        'inline_image'       => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_send_mail_news']['inline_image'],
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array(
+                'submitOnChange'   => true,
+                'tl_class'         => 'm12'
+            )
+        ),
+        'inline_image_dir' => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_send_mail_news']['inline_image_dir'],
+            'exclude'   => true,
+            'inputType' => 'fileTree',
+            'eval'      => array(
+                'fieldType' => 'radio',
+                'files'     => false,
+                'filesOnly' => false,
+                'mandatory' => true
+            )
+        ),
+        'size'      => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_content']['size'],
+            'exclude'   => true,
+            'inputType' => 'imageSize',
+            'options'   => $GLOBALS['TL_CROP'],
+            'reference' => &$GLOBALS['TL_LANG']['MSC'],
+            'eval'      => array(
+                'rgxp'        => 'digit',
+                'nospace'     => true,
+                'helpwizard'  => true,
+                'tl_class'    => 'w50'
+            )
+        ),
+        'imagemargin' => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_content']['imagemargin'],
+            'exclude'   => true,
+            'inputType' => 'trbl',
+            'options'   => array('px', '%', 'em', 'ex', 'pt', 'pc', 'in', 'cm', 'mm'),
+            'eval' => array(
+                'includeBlankOption' => true,
+                'tl_class'           => 'w50'
+            )
+        ),
+        'fullsize'           => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_content']['fullsize'],
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => array(
+                'tl_class' => 'w50 m12'
+            )
+        ),
+        'floating' => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_content']['floating'],
+            'exclude'   => true,
+            'inputType' => 'radioTable',
+            'options'   => array('above', 'left', 'right', 'below'),
+            'eval' => array(
+                'cols'      => 4,
+                'tl_class'  => 'w50'
+            ),
+            'reference' => &$GLOBALS['TL_LANG']['MSC']
+        ),
+        'enclosure' => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_send_mail_news']['enclosure'],
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'default'   => '',
+            'eval'      => array(
+                'isBoolean'      => true,
+                'submitOnChange' => true,
+                'tl_class'       => 'm12'
+            )
+        ),
+        'enclosure_dir'  => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_send_mail_news']['enclosure_dir'],
+            'exclude'   => true,
+            'inputType' => 'fileTree',
+            'eval'      => array(
+                'fieldType'  => 'radio',
+                'files'      => false,
+                'filesOnly'  => false,
+                'mandatory'  => true
+            )
+        ),
+        'time_check' => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_send_mail_news']['time_check'],
             'exclude'   => true,
             'inputType' => 'select',
@@ -229,35 +320,13 @@ $GLOBALS['TL_DCA']['tl_send_mail_news'] = array(
                 'includeBlankOption' => true
             )
         ),
-        'enclosure'          => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_send_mail_news']['enclosure'],
-            'exclude'   => true,
-            'inputType' => 'checkbox',
-            'default'   => '',
-            'eval'      => array(
-                'isBoolean'      => true,
-                'submitOnChange' => true,
-                'tl_class'       => 'clr'
-            )
-        ),
-        'enclosure_dir'  => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_send_mail_news']['enclosure_dir'],
-            'exclude'   => true,
-            'inputType' => 'fileTree',
-            'eval'      => array(
-                'fieldType' => 'radio',
-                'files'     => false,
-                'filesOnly' => false,
-                'mandatory' => true
-            )
-        ),
-        'published' => array
+        'published'          => array
             (
             'label'     => &$GLOBALS['TL_LANG']['tl_send_mail_news']['published'],
             'exclude'   => true,
             'inputType' => 'checkbox',
             'eval'      => array(
-                'doNotCopy' => true
+                'doNotCopy' => true,
             )
         ),
     )

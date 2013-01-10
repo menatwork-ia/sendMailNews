@@ -35,14 +35,14 @@ class MailContainer
 
     protected $_intId         = null;
     protected $_strSubject    = null;
-    protected $_strSize       = null;
     protected $_strDate       = null;
-    protected $_arrTo         = null;
-    protected $_arrCc         = null;
-    protected $_arrFrom       = null;
-    protected $_arrReplyTo    = null;
-    protected $_strBody       = null;
-    protected $_arrAttachment = null;
+    protected $_objTo         = null;
+    protected $_objFrom       = null;
+    protected $_objReplyTo    = null;
+    protected $_objSender     = null;
+    protected $_strBody       = '';
+    protected $_strType       = null;
+    protected $_arrAttachment = array();
 
     public function getId()
     {
@@ -64,16 +64,6 @@ class MailContainer
         $this->_strSubject = $strSubject;
     }
 
-    public function getSize()
-    {
-        return $this->_strSize;
-    }
-
-    public function setSize($strSize)
-    {
-        $this->_strSize = $strSize;
-    }
-
     public function getDate()
     {
         return $this->_strDate;
@@ -86,42 +76,42 @@ class MailContainer
 
     public function getTo()
     {
-        return $this->_arrTo;
+        return $this->_objTo;
     }
 
-    public function setTo($strTo)
+    public function setTo($objTo)
     {
-        $this->_arrTo = $strTo;
-    }
-
-    public function getCc()
-    {
-        return $this->_arrCc;
-    }
-
-    public function setCc($strCc)
-    {
-        $this->_arrCc = $strCc;
+        $this->_objTo = $objTo;
     }
 
     public function getFrom()
     {
-        return $this->_arrFrom;
+        return $this->_objFrom;
     }
 
-    public function setFrom($strFrom)
+    public function setFrom($objFrom)
     {
-        $this->_arrFrom = $strFrom;
+        $this->_objFrom = $objFrom;
     }
 
     public function getReplyTo()
     {
-        return $this->_arrReplyTo;
+        return $this->_objReplyTo;
     }
 
-    public function setReplyTo($strReplyTo)
+    public function setReplyTo($objReplyTo)
     {
-        $this->_arrReplyTo = $strReplyTo;
+        $this->_objReplyTo = $objReplyTo;
+    }
+
+    public function getSender()
+    {
+        return $this->_objSender;
+    }
+
+    public function setSender($objSender)
+    {
+        $this->_objSender = $objSender;
     }
 
     public function getBody()
@@ -132,6 +122,16 @@ class MailContainer
     public function setBody($strBody)
     {
         $this->_strBody = $strBody;
+    }
+
+    public function getType()
+    {
+        return $this->_strType;
+    }
+
+    public function setType($strType)
+    {
+        $this->_strType = $strType;
     }
 
     public function getAttachment()

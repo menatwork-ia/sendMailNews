@@ -43,3 +43,10 @@ $GLOBALS['TL_CRON']['daily'][] = array('SendMailNews', 'cronJobDaily');
 $GLOBALS['TL_CRON']['weekly'][] = array('SendMailNews', 'cronJobWeekly');
 $GLOBALS['TL_CRON']['monthly'][] = array('SendMailNews', 'cronJobMonthly');
 
+/**
+ * Config array
+ */
+$GLOBALS['EXT_SEND_MAIL_NEWS'] = array(
+    'charset' => 'UTF-8//TRANSLIT',
+    'allowed_tags' => '<span><br><br/><p><b><i><strong><a>'
+);
