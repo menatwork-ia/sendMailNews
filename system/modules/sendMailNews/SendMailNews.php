@@ -35,10 +35,15 @@ class SendMailNews extends Backend
 
     /**
      *
-     * @var type 
+     * @var ConnectionController
      */
     protected $_objConnectionController = null;
-    protected $_objMailConfig           = null;
+
+    /**
+     *
+     * @var Database_Result
+     */
+    protected $_objMailConfig = null;
 
     /**
      * Initialize the object
@@ -50,6 +55,10 @@ class SendMailNews extends Backend
         $this->import('String');
     }
 
+    /**
+     * Check for new mails on mail server and update the news
+     * Redirect to the referer page (backend check for mails icon)
+     */
     public function checkMailsNow()
     {
         $intId = $this->Input->get('id');
@@ -150,7 +159,7 @@ class SendMailNews extends Backend
                             $arrNews['singleSRC']   = $strFilePath;
                             $arrNews['size']        = $this->_objMailConfig->size;
                             $arrNews['imagemargin'] = $this->_objMailConfig->imagemargin;
-                            $arrNews['fullsize'] = $this->_objMailConfig->fullsize;
+                            $arrNews['fullsize']    = $this->_objMailConfig->fullsize;
                             $arrNews['floating']    = $this->_objMailConfig->floating;
 
                             $blnHasInline = true;
@@ -229,9 +238,11 @@ class SendMailNews extends Backend
     /* HELPER --------------------------------------------------------------- */
 
     /**
+     * Remove not specified tags, empty tags and tag attributes. Remove inline images and
+     * tag the first of them as inline. Remove the other one from attachment.
      * 
      * @param MailContainer $objMail
-     * @return type
+     * @return string
      */
     protected function _validateMailBody($objMail)
     {
@@ -296,6 +307,12 @@ class SendMailNews extends Backend
         return $strCleanText;
     }
 
+    /**
+     * Return the user id 
+     * 
+     * @param type $strMail
+     * @return type
+     */
     protected function _getUserIdForMail($strMail)
     {
         $objResult = $this->Database

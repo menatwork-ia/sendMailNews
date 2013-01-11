@@ -54,6 +54,11 @@ class ConnectionController extends Backend
         $this->_convertVars();
     }
 
+    /**
+     * Connect to the mailserver and return array with mail containers
+     * 
+     * @return array
+     */
     public function getMails()
     {
         if (is_null($this->_objInbox))
@@ -167,6 +172,9 @@ class ConnectionController extends Backend
 
     // GET INFO FROM IMAP ------------------------------------------------------
 
+    /**
+     * Open stream to the mail server
+     */
     public function connectInbox()
     {
         $this->_objInbox = imap_open($this->_strMailbox, $this->_strUsername, $this->_strPasswort);
@@ -203,15 +211,28 @@ class ConnectionController extends Backend
         return $headerObject;
     }
 
+    /**
+     * Return the mail structure
+     * 
+     * @param integer $intId
+     * @return \stdClass
+     */
     protected function _getStructure($intId)
     {
         return imap_fetchstructure($this->_objInbox, $intId);
     }
 
+    /**
+     * Iterate recursive through the given mail structure and set the mail body and the attachments
+     * 
+     * @param integer $intId
+     * @param \stdClass $objStructure
+     * @param interger $partIdentifier
+     */
     protected function processStructure($intId, $objStructure, $partIdentifier = null)
     {
 
-        $arrParameters = $this->getParametersFromStructure($objStructure);
+        $arrParameters = $this->_getParametersFromStructure($objStructure);
 
         if (isset($arrParameters['NAME']) || isset($arrParameters['FILENAME']))
         {
@@ -274,6 +295,7 @@ class ConnectionController extends Backend
     }
 
     /**
+     * Delete given mail container object from mail server
      * 
      * @param MailContainer $objMail
      * @return boolean
@@ -284,7 +306,7 @@ class ConnectionController extends Backend
     }
 
     /**
-     * Close inbox
+     * Close stream to mail server
      */
     public function closeInbox()
     {
@@ -305,7 +327,7 @@ class ConnectionController extends Backend
     {
         $objFile = new stdClass();
 
-        $arrParameters = $this->getParametersFromStructure($objStructure);
+        $arrParameters = $this->_getParametersFromStructure($objStructure);
 
         if (isset($arrParameters['FILENAME']))
         {
@@ -319,7 +341,7 @@ class ConnectionController extends Backend
         $objFile->ifid = $objStructure->ifid;
         $objFile->id   = str_replace(array('<', '>'), '', $objStructure->id);
         $objFile->size     = $objStructure->bytes;
-        $objFile->mimeType = $this->typeIdToString($objStructure->type);
+        $objFile->mimeType = $this->_typeIdToString($objStructure->type);
 
         if (isset($objStructure->subtype))
             $objFile->mimeType .= '/' . strtolower($objStructure->subtype);
@@ -397,15 +419,10 @@ class ConnectionController extends Backend
 
     // HELPER ------------------------------------------------------------------
 
-    public function getInboxObject()
-    {
-        return $this->_objInbox;
-    }
-
     /**
      * Create an object with all nessesary information and return it
      * 
-     * @param type $arrAddr
+     * @param array $arrAddr
      * @return null|\stdClass
      */
     protected function _processAddressObject($arrAddr)
@@ -424,7 +441,13 @@ class ConnectionController extends Backend
         return $objFormedAddr;
     }
 
-    public function getParametersFromStructure($objStructure)
+    /**
+     * Return the formated parameters from given mail structure object
+     * 
+     * @param \stdClass $objStructure
+     * @return array
+     */
+    protected function _getParametersFromStructure($objStructure)
     {
         $arrParameters = array();
         if (isset($objStructure->parameters))
@@ -438,27 +461,40 @@ class ConnectionController extends Backend
         return $arrParameters;
     }
 
-    protected function _decode($data, $encoding)
+    /**
+     * Return the given data encoded
+     * 
+     * @param string $strData
+     * @param string $strEncoding
+     * @return string
+     */
+    protected function _decode($strData, $strEncoding)
     {
-        if (!is_numeric($encoding))
-            $encoding = strtolower($encoding);
+        if (!is_numeric($strEncoding))
+            $strEncoding = strtolower($strEncoding);
 
-        switch ($encoding)
+        switch ($strEncoding)
         {
             case 'quoted-printable':
             case 4:
-                return quoted_printable_decode($data);
+                return quoted_printable_decode($strData);
 
             case 'base64':
             case 3:
-                return base64_decode($data);
+                return base64_decode($strData);
 
             default:
-                return $data;
+                return $strData;
         }
     }
 
-    public function typeIdToString($intId)
+    /**
+     * Return the type for the given type id as string
+     * 
+     * @param integer $intId
+     * @return string
+     */
+    protected function _typeIdToString($intId)
     {
         switch ($intId)
         {
@@ -490,7 +526,7 @@ class ConnectionController extends Backend
     }
 
     /**
-     * Convert all values to php imape 
+     * Convert all values to php imap
      */
     protected function _convertVars()
     {
@@ -499,6 +535,11 @@ class ConnectionController extends Backend
         $this->_strPasswort = $this->Encryption->decrypt($this->_objMailConfig->mail_server_password);
     }
 
+    /**
+     * Create imap mail connection string 
+     * 
+     * @return string
+     */
     protected function _createMailbox()
     {
         $arrSecurityOptions = explode('_', $this->_objMailConfig->mail_server_security);
@@ -526,6 +567,11 @@ class ConnectionController extends Backend
                 ));
     }
 
+    /**
+     * Return the default port for connection type
+     * 
+     * @return integer
+     */
     protected function _getPort()
     {
         if ($this->_objMailConfig->mail_server_port == 0)
@@ -543,6 +589,11 @@ class ConnectionController extends Backend
         return $this->_objMailConfig->mail_server_port;
     }
 
+    /**
+     * Return boolean if connection settings are ssl or mot
+     * 
+     * @return boolean
+     */
     protected function _isSsl()
     {
         return (strpos($this->_objMailConfig->mail_server_security, 'ssl') !== false) ? true : false;
